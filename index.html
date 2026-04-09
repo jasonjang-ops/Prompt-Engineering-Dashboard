@@ -1,59 +1,527 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physical AI Energy Systems Lab</title>
-<link rel="stylesheet" href="style.css">
-<script src="script.js"></script>
+<title data-i18n="page_title">提示词工程 (Prompt Engineering) 实操流程探索</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+    
+    body { font-family: 'Inter', sans-serif; }
+    .tech-font { font-family: 'Orbitron', sans-serif; }
+
+    .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 350px;
+        max-height: 400px;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    @media (max-width: 768px) {
+        .chart-container { height: 250px; }
+    }
+</style>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                brand: {
+                    50: '#f0f9ff',
+                    100: '#e0f2fe',
+                    500: '#0ea5e9',
+                    600: '#0284c7',
+                    900: '#0c4a6e',
+                }
+            }
+        }
+    }
+}
+</script>
 </head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-<body>
+<!-- Chosen Palette: Global Tech (Sky Blue & Slate) -->
+<!-- Application Structure Plan: Dynamic dashboard with sidebar. Implemented a robust i18n mapping for seamless switching between Chinese, English, and Korean. The layout prioritizes readability and interactive exploration of the 4-phase prompt engineering workflow. -->
+<!-- Visualization & Content Choices: Doughnut and Bar charts from Chart.js are re-rendered on language switch to maintain consistency. Accordions and interactive cards provide drill-down details for each phase. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 
-<header>
-<h1>Physical AI Energy Systems Lab</h1>
-<p>물리적 인공지능 기반 재생에너지 시스템 연구</p>
+<header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🚀</span>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight tech-font" data-i18n="header_title">Prompt Engineering Guide</h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-100 p-1 rounded-lg flex gap-1">
+                <button onclick="switchLang('zh')" class="lang-btn px-2 py-1 text-xs font-bold rounded transition-all bg-white shadow-sm text-brand-600" id="lang-zh">ZH</button>
+                <button onclick="switchLang('en')" class="lang-btn px-2 py-1 text-xs font-bold rounded transition-all text-slate-500 hover:text-brand-600" id="lang-en">EN</button>
+                <button onclick="switchLang('ko')" class="lang-btn px-2 py-1 text-xs font-bold rounded transition-all text-slate-500 hover:text-brand-600" id="lang-ko">KO</button>
+            </div>
+            <div class="hidden sm:block text-xs text-slate-500 font-medium border-l border-slate-200 pl-3" data-i18n="lab_tag">Physical AI Energy Systems Lab Case</div>
+        </div>
+    </div>
 </header>
 
-<nav>
-<a href="#research">Research</a>
-<a href="publications/papers.html">Publications</a>
-<a href="people/team.html">People</a>
-<a href="saemangeum/project.html">Saemangeum</a>
-<a href="#contact">Contact</a>
-</nav>
+<main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col md:flex-row gap-8">
+    
+    <nav class="w-full md:w-72 flex-shrink-0">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden sticky top-24">
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest" data-i18n="nav_title">Interactive Workflow</h2>
+            </div>
+            <ul class="flex flex-col" id="nav-menu">
+                <li><button onclick="navigate('intro')" id="btn-intro" class="w-full text-left px-4 py-4 text-sm font-medium transition-all bg-brand-50 text-brand-600 border-l-4 border-brand-500">📊 <span data-i18n="menu_intro">流程概览</span></button></li>
+                <li><button onclick="navigate('phase1')" id="btn-phase1" class="w-full text-left px-4 py-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all border-l-4 border-transparent">🛠 <span data-i18n="menu_p1">第一阶段：框架搭建</span></button></li>
+                <li><button onclick="navigate('phase2')" id="btn-phase2" class="w-full text-left px-4 py-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all border-l-4 border-transparent">🔌 <span data-i18n="menu_p2">第二阶段：上下文注入</span></button></li>
+                <li><button onclick="navigate('phase3')" id="btn-phase3" class="w-full text-left px-4 py-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all border-l-4 border-transparent">🎨 <span data-i18n="menu_p3">第三阶段：迭代升级</span></button></li>
+                <li><button onclick="navigate('phase4')" id="btn-phase4" class="w-full text-left px-4 py-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all border-l-4 border-transparent">🌍 <span data-i18n="menu_p4">第四阶段：全球化与功能</span></button></li>
+                <li><button onclick="navigate('summary')" id="btn-summary" class="w-full text-left px-4 py-4 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all border-l-4 border-transparent">📈 <span data-i18n="menu_sum">核心 Prompt 建议</span></button></li>
+            </ul>
+        </div>
+    </nav>
 
-<section id="hero">
-<h2>Future-Tech Research Platform</h2>
-<p>Physical AI • ESS Control • Renewable Smart Grid</p>
-</section>
+    <section class="flex-1 glass-card rounded-2xl shadow-xl p-6 md:p-10 min-h-[600px] transition-all duration-500">
+        
+        <div id="view-intro" class="block animate-in fade-in duration-700">
+            <div class="mb-8 border-b border-slate-100 pb-8">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4" data-i18n="intro_h">项目开发流程概览</h2>
+                <p class="text-slate-600 leading-relaxed text-lg" data-i18n="intro_p">
+                    本视图展示了如何利用 AI 提示词工程，从零开始构建并迭代一个具有“科技感”和“国际化”特征的研究实验室网站。
+                </p>
+            </div>
+            <div class="bg-white rounded-2xl p-8 border border-slate-100 shadow-inner">
+                <h3 class="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mb-6" data-i18n="chart1_title">核心工作流分布</h3>
+                <div class="chart-container">
+                    <canvas id="overviewChart"></canvas>
+                </div>
+            </div>
+        </div>
 
-<section id="research">
-<h2>Research Areas</h2>
-<ul>
-<li>Physical AI Systems</li>
-<li>Energy Storage System Control</li>
-<li>Renewable Grid Optimization</li>
-</ul>
-</section>
+        <div id="view-phase1" class="hidden">
+            <div class="mb-8 border-b border-slate-100 pb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4" data-i18n="p1_h">第一阶段：框架搭建 (Meta-Prompting)</h2>
+                <p class="text-slate-600 leading-relaxed" data-i18n="p1_p">
+                    本阶段的核心目标是确定开发准则，并为 AI 建立准确的“专家人格”。
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-brand-50 rounded-xl p-6 border border-brand-100">
+                    <div class="text-brand-600 text-2xl mb-3">🎯</div>
+                    <h3 class="font-bold text-brand-900 mb-2" data-i18n="p1_strat">Prompt 策略</h3>
+                    <p class="text-brand-700 font-medium" data-i18n="p1_strat_val">角色设定 (Persona) + 规则定义 (Rules)</p>
+                </div>
+            </div>
 
-<section>
-<h2>Paper Search</h2>
-<input id="searchbox" placeholder="Search Physical AI papers">
-<button onclick="searchIEEE()">IEEE</button>
-<button onclick="searchScienceDirect()">ScienceDirect</button>
-</section>
+            <div class="space-y-4">
+                <div class="group bg-white border border-slate-200 rounded-xl p-5 hover:border-brand-300 transition-all shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800" data-i18n="p1_s1">1. 定义角色</span>
+                        <span class="text-brand-500">Step 01</span>
+                    </div>
+                    <p class="mt-3 text-slate-500 text-sm border-l-2 border-brand-200 pl-4" data-i18n="p1_s1_d">设定 AI 为“资深前端架构师”和“学术网站技术作家”。</p>
+                </div>
+                <div class="group bg-white border border-slate-200 rounded-xl p-5 hover:border-brand-300 transition-all shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800" data-i18n="p1_s2">2. 确立风格</span>
+                        <span class="text-brand-500">Step 02</span>
+                    </div>
+                    <p class="mt-3 text-slate-500 text-sm border-l-2 border-brand-200 pl-4" data-i18n="p1_s2_d">明确“未来科技感”、“深色调”、“学术严谨”等关键词。</p>
+                </div>
+            </div>
+        </div>
 
-<section id="contact">
-<h2>Contact</h2>
-<p>Email: research@physicalai-lab.org</p>
-<p>GitHub Lab Repository</p>
-</section>
+        <div id="view-phase2" class="hidden">
+            <div class="mb-8 border-b border-slate-100 pb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4" data-i18n="p2_h">第二阶段：上下文注入 (Context Injection)</h2>
+                <p class="text-slate-600 leading-relaxed" data-i18n="p2_p">
+                    让 AI 学习已有的素材，实现跨平台衔接和能力继承。
+                </p>
+            </div>
 
-<footer>
-<p>© Physical AI Energy Systems Lab</p>
+            <div class="bg-slate-900 rounded-2xl p-10 text-white text-center relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-40 h-40 bg-brand-500 opacity-20 blur-3xl"></div>
+                <h3 class="text-brand-400 font-bold mb-8 tracking-widest text-sm uppercase" data-i18n="p2_strat">Prompt 策略: 引用参考 + 能力继承</h3>
+                
+                <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                    <div class="bg-slate-800 p-6 rounded-2xl w-full md:w-5/12 border border-slate-700">
+                        <div class="text-3xl mb-3">📄</div>
+                        <div class="font-bold text-base" data-i18n="p2_i1">原始数据/日志</div>
+                        <div class="text-xs text-slate-500 mt-2" data-i18n="p2_i1_d">跨平台衔接输入</div>
+                    </div>
+                    
+                    <div class="text-brand-500 text-3xl font-bold rotate-90 md:rotate-0">➔</div>
+                    
+                    <div class="bg-brand-600/20 p-6 rounded-2xl w-full md:w-5/12 border border-brand-500/30">
+                        <div class="text-3xl mb-3">🧠</div>
+                        <div class="font-bold text-base" data-i18n="p2_i2">知识同步机制</div>
+                        <div class="text-xs text-brand-300 mt-2" data-i18n="p2_i2_d">记录: 物理AI / 新万金 / 产教融合</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-phase3" class="hidden">
+            <div class="mb-8 border-b border-slate-100 pb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4" data-i18n="p3_h">第三阶段：迭代升级 (Iterative Refinement)</h2>
+                <p class="text-slate-600 leading-relaxed" data-i18n="p3_p">
+                    通过“逐步提示”策略，将静态内容转化为动态视觉网站。
+                </p>
+            </div>
+
+            <div class="bg-amber-50 text-amber-900 p-5 rounded-xl mb-8 border border-amber-200 flex items-start gap-4">
+                <span class="text-2xl mt-1">💡</span>
+                <div>
+                    <div class="font-bold text-sm uppercase" data-i18n="p3_strat">核心策略</div>
+                    <div class="text-amber-800 font-medium" data-i18n="p3_strat_v">任务拆解 (Divide Labor) + 具体细节描述 (Detail Description)</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-8 border border-slate-100 shadow-inner">
+                <h3 class="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mb-6" data-i18n="chart2_title">功能演进轨迹</h3>
+                <div class="chart-container">
+                    <canvas id="iterationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-phase4" class="hidden">
+            <div class="mb-8 border-b border-slate-100 pb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4" data-i18n="p4_h">第四阶段：全球化与功能补全</h2>
+                <p class="text-slate-600 leading-relaxed" data-i18n="p4_p">
+                    这一阶段代表了网站从“原型”向“产品”的跨越。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-5">
+                <div class="group p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white hover:border-brand-400 transition-all">
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold shadow-lg">1</div>
+                        <h3 class="font-bold text-slate-800 text-xl" data-i18n="p4_f1">三语切换引擎</h3>
+                    </div>
+                    <p class="text-slate-500 leading-relaxed ml-14" data-i18n="p4_f1_d">设计 i18n 数据结构，实现 ZH / EN / KO 一键无刷新切换。</p>
+                </div>
+
+                <div class="group p-6 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white hover:border-brand-400 transition-all">
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold shadow-lg">2</div>
+                        <h3 class="font-bold text-slate-800 text-xl" data-i18n="p4_f2">学术数据库检索</h3>
+                    </div>
+                    <p class="text-slate-500 leading-relaxed ml-14" data-i18n="p4_f2_d">编写跨库检索脚本，支持直接搜索 IEEE、IEEK、ScienceDirect。</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-summary" class="hidden">
+            <div class="mb-8 border-b border-slate-100 pb-6">
+                <h2 class="text-2xl font-bold text-slate-900 mb-4" data-i18n="sum_h">给同学们的 4 个 Prompt 建议</h2>
+                <p class="text-slate-600 leading-relaxed" data-i18n="sum_p">
+                    基于开发全流程提炼的实操建议。点击原则卡片深入了解。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="cursor-pointer bg-white border-2 border-slate-100 rounded-2xl p-6 hover:border-brand-400 transition-all hover:shadow-xl" onclick="showMsg('sum_t1_m')">
+                    <div class="text-4xl mb-4">🧱</div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-2" data-i18n="sum_t1">不要一次性给全部指令</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold" data-i18n="click_info">Click for detail</p>
+                </div>
+                
+                <div class="cursor-pointer bg-white border-2 border-slate-100 rounded-2xl p-6 hover:border-brand-400 transition-all hover:shadow-xl" onclick="showMsg('sum_t2_m')">
+                    <div class="text-4xl mb-4">👁️</div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-2" data-i18n="sum_t2">描述视觉而非仅仅是功能</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold" data-i18n="click_info">Click for detail</p>
+                </div>
+
+                <div class="cursor-pointer bg-white border-2 border-slate-100 rounded-2xl p-6 hover:border-brand-400 transition-all hover:shadow-xl" onclick="showMsg('sum_t3_m')">
+                    <div class="text-4xl mb-4">🧠</div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-2" data-i18n="sum_t3">深度利用上下文记忆</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold" data-i18n="click_info">Click for detail</p>
+                </div>
+
+                <div class="cursor-pointer bg-white border-2 border-slate-100 rounded-2xl p-6 hover:border-brand-400 transition-all hover:shadow-xl" onclick="showMsg('sum_t4_m')">
+                    <div class="text-4xl mb-4">🌐</div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-2" data-i18n="sum_t4">结构化处理多语言对照</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold" data-i18n="click_info">Click for detail</p>
+                </div>
+            </div>
+            
+            <div id="dynamic-msg" class="mt-8 hidden bg-brand-600 text-white p-6 rounded-2xl shadow-xl animate-bounce-short">
+                <div class="flex items-start gap-4">
+                    <span class="text-2xl">💡</span>
+                    <p id="msg-text" class="font-medium"></p>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</main>
+
+<footer class="bg-slate-900 text-slate-500 py-10 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <p class="text-sm">© 2026 PAI Energy Lab | Kunsan National University</p>
+    </div>
 </footer>
 
+<script>
+const i18n = {
+    zh: {
+        page_title: "提示词工程 (Prompt Engineering) 实操流程探索",
+        header_title: "Prompt Engineering 指南",
+        lab_tag: "Physical AI Energy Systems Lab 案例",
+        nav_title: "交互式工作流",
+        menu_intro: "流程概览",
+        menu_p1: "第一阶段：框架搭建",
+        menu_p2: "第二阶段：上下文注入",
+        menu_p3: "第三阶段：迭代升级",
+        menu_p4: "第四阶段：全球化与功能",
+        menu_sum: "核心 Prompt 建议",
+        intro_h: "项目开发流程概览",
+        intro_p: "本视图展示了如何利用 AI 提示词工程，从零开始构建并迭代一个具有“科技感”和“国际化”特征的研究实验室网站。通过将整个开发过程拆分为四个阶段，我们可以清晰地看到从基础框架到高级功能逻辑的演进过程。",
+        chart1_title: "核心工作流分布",
+        chart1_l1: "框架搭建", chart1_l2: "上下文注入", chart1_l3: "迭代升级", chart1_l4: "逻辑补全",
+        p1_h: "第一阶段：框架搭建 (Meta-Prompting)",
+        p1_p: "本阶段的核心目标是确定开发准则，并为 AI 建立准确的“专家人格”。在生成代码前设定明确的边界是确保质量的基础。",
+        p1_strat: "Prompt 策略",
+        p1_strat_val: "角色设定 (Persona) + 规则定义 (Rules)",
+        p1_s1: "1. 定义角色", p1_s1_d: "设定 AI 为“资深前端架构师”和“学术网站技术作家”。",
+        p1_s2: "2. 确立风格", p1_s2_d: "明确“未来科技感”、“深色调”、“学术严谨”等视觉关键词。",
+        p2_h: "第二阶段：上下文注入 (Context Injection)",
+        p2_p: "通过注入先前的对话记录或外部报告，让 AI 迅速掌握项目的核心知识背景，实现平滑迁移。",
+        p2_strat: "Prompt 策略: 引用参考 + 能力继承",
+        p2_i1: "原始数据/日志", p2_i1_d: "跨平台衔接输入",
+        p2_i2: "知识同步机制", p2_i2_d: "记录: 物理AI / 新万金 / 产教融合",
+        p3_h: "第三阶段：迭代升级 (Iterative Refinement)",
+        p3_p: "通过“逐步提示”策略，将静态内容转化为动态视觉网站。拆解任务是避免 AI 产生幻觉的关键。",
+        p3_strat: "核心策略",
+        p3_strat_v: "任务拆解 (Divide Labor) + 具体细节描述 (Detail Description)",
+        chart2_title: "功能演进轨迹",
+        p4_h: "第四阶段：全球化与功能补全",
+        p4_p: "这一阶段代表了网站从“原型”向“产品”的跨越。实现多语言逻辑与学术功能的深度集成。",
+        p4_f1: "三语切换引擎", p4_f1_d: "设计 i18n 数据结构，实现 ZH / EN / KO 一键无刷新切换。",
+        p4_f2: "学术数据库检索", p4_f2_d: "编写跨库检索脚本，支持直接搜索 IEEE、IEEK、ScienceDirect。",
+        sum_h: "总结：给同学们的 4 个 Prompt 建议",
+        sum_p: "基于开发全流程提炼的实操建议。点击卡片深入了解。",
+        click_info: "点击查看详情",
+        sum_t1: "不要一次性给全部指令", sum_t1_m: "建议：将复杂项目拆解为骨架构建、内容填充和特效叠加三个步骤，避免 AI 丢失上下文。",
+        sum_t2: "描述视觉而非仅仅是功能", sum_t2_m: "建议：使用具体的视觉词汇（如毛玻璃、霓虹脉动）来控制 CSS 渲染，而非模糊描述。",
+        sum_t3: "深度利用上下文记忆", sum_t3_m: "建议：使用【基于上一版代码，仅修改 XXX 模块】的指令格式，维持代码基线的稳定。",
+        sum_t4: "结构化处理多语言对照", sum_t4_m: "建议：在 Prompt 中明确要求建立多语言映射数据结构（如 JSON 格式），AI 可自动处理翻译。",
+        chart2_r1: "基础构建", chart2_r2: "视觉体系", chart2_r3: "交互逻辑", chart2_r4: "功能整合"
+    },
+    en: {
+        page_title: "Prompt Engineering Practical Workflow Exploration",
+        header_title: "Prompt Engineering Guide",
+        lab_tag: "Physical AI Energy Systems Lab Case",
+        nav_title: "Interactive Workflow",
+        menu_intro: "Process Overview",
+        menu_p1: "Phase 1: Meta-Prompting",
+        menu_p2: "Phase 2: Context Injection",
+        menu_p3: "Phase 3: Iterative Refinement",
+        menu_p4: "Phase 4: Global Logic",
+        menu_sum: "Core Prompt Tips",
+        intro_h: "Project Development Overview",
+        intro_p: "This view demonstrates how to build and iterate a high-tech academic website from scratch using AI Prompt Engineering. By splitting the process into four phases, we see the evolution from a basic framework to advanced logic.",
+        chart1_title: "Workflow Distribution",
+        chart1_l1: "Meta-Prompting", chart1_l2: "Context", chart1_l3: "Refinement", chart1_l4: "Advanced",
+        p1_h: "Phase 1: Meta-Prompting",
+        p1_p: "The core goal is to define development guidelines and establish an accurate 'Expert Persona' for the AI.",
+        p1_strat: "Prompt Strategy",
+        p1_strat_val: "Persona + Rules Definition",
+        p1_s1: "1. Define Persona", p1_s1_d: "Set AI as 'Senior Frontend Architect' and 'Technical Writer'.",
+        p1_s2: "2. Set Style", p1_s2_d: "Specify keywords like 'Future-Tech', 'Dark Theme', and 'Academic Rigor'.",
+        p2_h: "Phase 2: Context Injection",
+        p2_p: "Feeding previous chat logs or reports to the AI to ensure capability inheritance and seamless tool migration.",
+        p2_strat: "Strategy: Reference + Capability Inheritance",
+        p2_i1: "Raw Data/Logs", p2_i1_d: "Cross-platform input",
+        p2_i2: "Knowledge Sync", p2_i2_d: "Topics: Physical AI / Saemangeum / Integration",
+        p3_h: "Phase 3: Iterative Refinement",
+        p3_p: "Transforming static content into dynamic visuals using step-by-step prompting. Task division is key to avoiding AI hallucinations.",
+        p3_strat: "Core Strategy",
+        p3_strat_v: "Divide Labor + Detail Description",
+        chart2_title: "Feature Evolution Track",
+        p4_h: "Phase 4: Globalization & Features",
+        p4_p: "Transitioning from 'Prototype' to 'Product'. Implementing multi-language support and academic tool integration.",
+        p4_f1: "Multi-lang Engine", p4_f1_d: "Designing i18n data structures for seamless ZH/EN/KO switching.",
+        p4_f2: "Database Search", p4_f2_d: "Integrating search scripts for IEEE, IEEK, and ScienceDirect.",
+        sum_h: "Summary: 4 Prompt Tips for Students",
+        sum_p: "Practical suggestions refined from the development process. Click cards for details.",
+        click_info: "Click for details",
+        sum_t1: "Don't send all instructions at once", sum_t1_m: "Tip: Break complex projects into skeleton, content, and effects to prevent context loss.",
+        sum_t2: "Describe visuals, not just functions", sum_t2_m: "Tip: Use specific visual terms like 'Glassmorphism' or 'Neon Pulse' to control CSS rendering.",
+        sum_t3: "Leverage Context Memory", sum_t3_m: "Tip: Use 'Based on previous code, only modify XXX' to keep the code base stable.",
+        sum_t4: "Handle Multi-lang Structurally", sum_t4_m: "Tip: Explicitly ask for i18n data structures like JSON to automate translations.",
+        chart2_r1: "Base Build", chart2_r2: "Visual System", chart2_r3: "Interactions", chart2_r4: "Full Integration"
+    },
+    ko: {
+        page_title: "프롬프트 엔지니어링 실무 워크플로우 탐색",
+        header_title: "프롬프트 엔지니어링 가이드",
+        lab_tag: "물리적 AI 에너지 시스템 연구실 사례",
+        nav_title: "대화형 워크플로우",
+        menu_intro: "프로세스 개요",
+        menu_p1: "1단계: 프레임워크 구축",
+        menu_p2: "2단계: 컨텍스트 주입",
+        menu_p3: "3단계: 반복 고도화",
+        menu_p4: "4단계: 글로벌화 및 기능",
+        menu_sum: "핵심 프롬프트 팁",
+        intro_h: "프로젝트 개발 프로세스 개요",
+        intro_p: "이 뷰는 AI 프롬프트 엔지니어링을 활용하여 하이테크 학술 웹사이트를 처음부터 구축하고 고도화하는 과정을 보여줍니다. 전체 개발 과정을 4단계로 나누어 기본 프레임워크에서 고급 기능으로 진화하는 과정을 확인할 수 있습니다.",
+        chart1_title: "핵심 워크플로우 분포",
+        chart1_l1: "프레임워크", chart1_l2: "컨텍스트", chart1_l3: "고도화", chart1_l4: "고급 기능",
+        p1_h: "1단계: 프레임워크 구축 (Meta-Prompting)",
+        p1_p: "핵심 목표는 개발 원칙을 확립하고 AI에게 정확한 '전문가 페르소나'를 부여하는 것입니다.",
+        p1_strat: "프롬프트 전략",
+        p1_strat_val: "페르소나 설정 + 규칙 정의",
+        p1_s1: "1. 페르소나 정의", p1_s1_d: "AI를 '시니어 프론트엔드 아키텍트' 및 '기술 작가'로 설정합니다.",
+        p1_s2: "2. 스타일 확립", p1_s2_d: "'미래 지향적', '다크 테마', '학술적 엄격함'과 같은 시각적 키워드를 명시합니다.",
+        p2_h: "2단계: 컨텍스트 주입 (Context Injection)",
+        p2_p: "이전 대화 기록이나 보고서를 주입하여 AI가 프로젝트의 핵심 배경지식을 빠르게 습득하도록 합니다.",
+        p2_strat: "전략: 참조 인용 + 능력 계승",
+        p2_i1: "원시 데이터/로그", p2_i1_d: "크로스 플랫폼 연계 입력",
+        p2_i2: "지식 동기화 매커니즘", p2_i2_d: "주제: 물리적 AI / 새만금 / 산학 융합",
+        p3_h: "3단계: 반복 고도화 (Iterative Refinement)",
+        p3_p: "단계별 프롬프트를 통해 정적 콘텐츠를 동적 웹사이트로 전환합니다. 업무를 세분화하는 것이 AI의 환각을 방지하는 핵심입니다.",
+        p3_strat: "핵심 전략",
+        p3_strat_v: "업무 분할 (Divide Labor) + 상세 세부 설명",
+        chart2_title: "기능 진화 궤적",
+        p4_h: "4단계: 글로벌화 및 기능 보완",
+        p4_p: "이 단계는 웹사이트가 '프로토타입'에서 '제품'으로 넘어가는 단계입니다. 다국어 로직과 학술 기능의 심층 통합을 실현합니다.",
+        p4_f1: "다국어 전환 엔진", p4_f1_d: "i18n 데이터 구조를 설계하여 ZH/EN/KO 원클릭 무새로고침 전환을 구현합니다.",
+        p4_f2: "학술 데이터베이스 검색", p4_f2_d: "IEEE, IEEK, ScienceDirect를 직접 검색할 수 있는 통합 스크립트를 작성합니다.",
+        sum_h: "요약: 학생들을 위한 4가지 프롬프트 제안",
+        sum_p: "개발 전 과정에서 추출한 실무 제안입니다. 카드를 클릭하여 자세히 알아보세요.",
+        click_info: "클릭하여 상세 정보 보기",
+        sum_t1: "모든 지침을 한 번에 주지 마세요", sum_t1_m: "제안: 복잡한 프로젝트를 뼈대 구축, 내용 채우기, 효과 추가의 3단계로 나누어 컨텍스트 유실을 방지하세요.",
+        sum_t2: "기능뿐만 아니라 시각적 요소를 설명하세요", sum_t2_m: "제안: '모던 글래스모피즘' 등 구체적인 시각적 어휘를 사용하여 CSS 렌더링을 제어하세요.",
+        sum_t3: "컨텍스트 메모리를 깊이 활용하세요", sum_t3_m: "제안: '이전 코드 기반으로 XXX 모듈만 수정' 형식을 사용하여 코드 베이스의 안정성을 유지하세요.",
+        sum_t4: "다국어 대조를 구조적으로 처리하세요", sum_t4_m: "제안: 프롬프트에서 다국어 매핑 데이터 구조(예: JSON)를 명시적으로 요구하여 번역을 자동화하세요.",
+        chart2_r1: "기본 구축", chart2_r2: "비주얼 시스템", chart2_r3: "인터랙션 로직", chart2_r4: "전체 통합"
+    }
+};
+
+const views = ['intro', 'phase1', 'phase2', 'phase3', 'phase4', 'summary'];
+let currentLang = 'zh';
+let overviewChartInstance = null;
+let iterationChartInstance = null;
+
+function navigate(targetId) {
+    views.forEach(v => {
+        document.getElementById('view-' + v).classList.add('hidden');
+        document.getElementById('view-' + v).classList.remove('block');
+        const btn = document.getElementById('btn-' + v);
+        btn.classList.remove('bg-brand-50', 'text-brand-600', 'border-brand-500');
+        btn.classList.add('text-slate-600', 'border-transparent');
+    });
+    document.getElementById('view-' + targetId).classList.remove('hidden');
+    document.getElementById('view-' + targetId).classList.add('block');
+    const activeBtn = document.getElementById('btn-' + targetId);
+    activeBtn.classList.remove('text-slate-600', 'border-transparent');
+    activeBtn.classList.add('bg-brand-50', 'text-brand-600', 'border-brand-500');
+}
+
+function switchLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'shadow-sm', 'text-brand-600');
+        btn.classList.add('text-slate-500');
+    });
+    document.getElementById('lang-' + lang).classList.add('bg-white', 'shadow-sm', 'text-brand-600');
+    document.getElementById('lang-' + lang).classList.remove('text-slate-500');
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = i18n[lang][key] || el.textContent;
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = i18n[lang][key] || el.placeholder;
+    });
+
+    updateCharts(lang);
+    document.getElementById('dynamic-msg').classList.add('hidden');
+}
+
+function showMsg(key) {
+    const msgBox = document.getElementById('dynamic-msg');
+    const text = document.getElementById('msg-text');
+    text.textContent = i18n[currentLang][key];
+    msgBox.classList.remove('hidden');
+}
+
+function updateCharts(lang) {
+    if(overviewChartInstance) overviewChartInstance.destroy();
+    if(iterationChartInstance) iterationChartInstance.destroy();
+
+    const ctxOverview = document.getElementById('overviewChart').getContext('2d');
+    overviewChartInstance = new Chart(ctxOverview, {
+        type: 'doughnut',
+        data: {
+            labels: [i18n[lang].chart1_l1, i18n[lang].chart1_l2, i18n[lang].chart1_l3, i18n[lang].chart1_l4],
+            datasets: [{
+                data: [20, 20, 40, 20],
+                backgroundColor: ['#0ea5e9', '#3b82f6', '#6366f1', '#14b8a6'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 20, font: { weight: 'bold' } } }
+            },
+            cutout: '75%'
+        }
+    });
+
+    const ctxIter = document.getElementById('iterationChart').getContext('2d');
+    iterationChartInstance = new Chart(ctxIter, {
+        type: 'bar',
+        data: {
+            labels: [i18n[lang].chart2_r1, i18n[lang].chart2_r2, i18n[lang].chart2_r3, i18n[lang].chart2_r4],
+            datasets: [{
+                label: 'Features / Complexity',
+                data: [3, 7, 12, 18],
+                backgroundColor: '#0ea5e9',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+function triggerSearch(type) {
+    const q = document.getElementById("dbSearch")?.value || "Physical AI ESS";
+    let url = type === 'ieee' ? "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText=" : "https://www.dbpia.co.kr/search/searchList?query=";
+    window.open(url + encodeURIComponent(q), "_blank");
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateCharts('zh');
+});
+</script>
 </body>
 </html>
